@@ -3,13 +3,6 @@
 #include <Arduino.h>
 #include "LocalServer.h"
 
-// #include <iostream>
-
-// WebServer server(80);
-// LocalServer local_server(server);
-
-// WebServer server(80);
-// LocalServer local_server(server);
 
 LocalServer::LocalServer()
 {
@@ -67,22 +60,6 @@ String send_html(String mode_){
   ptr +="</html>\n";
   return ptr;
 }
-
-
-// void LocalServer::run_server()
-// {
-//   Serial.println("IN START OF RUN_SERVER");
-
-
-//     //WebServer my_server = *((WebServer*)parameters);
-//     while (true)
-//     {
-//       Serial.println("IN WHILE LOOP IN RUN_SERVER");
-//         server.handleClient();
-//         //vTaskDelay(200);
-//     } 
-// }
-
 
 
 

@@ -14,57 +14,39 @@
 
 
 
+Drone::Drone(int pin1, int pin2)
+{
+    esc_fr_pin = pinfr;
+    esc_fl_pin = pinfl;
+    esc_br_pin = pinbr;
+    esc_bl_pin = pinbl;
+    esc_val_fr = 1000;
+    esc_val_fl = 1000;
+    esc_val_br = 1000;
+    esc_val_bl = 1000;
+    Position p(0,0,0,0,0,0);
+    pos = p;
+}
 
+void Drone::set_mode(String _mode)
+{
+    drone_mode = _mode;
+}
 
-// Control::Control(int esc_1_pin, int esc_2_pin)
-// {
+void Drone::update_position(Position& p)
+{
+    pos = p;
+}
 
-// }
+void Drone::set_target(Position& p)
+{
+    target_pos = p;
+}
 
+Control::Control() : Drone(int pin1, int pin2) {};
 
 void Control::set_params(int esc_1_pin, int esc_2_pin)
 {
-    // P_prev[2][2] = {{10,0},{0,10}};
-    // Q[2][2] = {{0.1,0},{0,0.3}};
-    // R = 0.03;
-    // roll = 0;
-    // pitch = 0;
-    // Kp_r = 1;
-    // Kp_p = 1;
-    // Kp_a = 1;
-    // Ki_r = 1;
-    // Ki_p = 1;
-    // Ki_a = 1;
-    // Kd_r = 1;
-    // Kd_p = 1;
-    // Kd_a = 1;
-    // roll_error = 0;
-    // pitch_error = 0;
-    // altitude_error = 0;
-    // integral_roll = 0;
-    // integral_pitch = 0;
-    // ntegral_altitude = 0;
-    // bias = 0;
-    // prev_state[2] = {0,0};
-    // prev_angle_estimate = 0;
-    // state = 2;
-    // pingPin = 9;
-    Serial.println("start of control constructor");
-    
-    Wire.begin();
-    delay(1000);
-    if (!mpu.setup(0x68)) {
-        while (1) {
-        Serial.println("MPU connection failed. Please check your connection");
-        delay(3000);
-        }
-    }
-    Serial.println("Accel Gyro calibration will start in 1sec.");
-    Serial.println("Please leave the device still on the flat plane.");
-    mpu.verbose(true);
-    delay(1000);
-    mpu.calibrateAccelGyro();
-    mpu.verbose(false);
 
     /*
     // start esc:
@@ -83,69 +65,74 @@ void Control::set_params(int esc_1_pin, int esc_2_pin)
 
 
 
-float Control::kalman_filter(float angle, float ang_vel, float measured_angle, float bias, long dt, float P_prev[2][2], float Q[2][2], float R ){
- 
-    float P_new[2][2], S;
-    float K[2];
-    float kalman_state[2];
-    
-    //predict
-    float predicted_angle = angle + dt*(ang_vel - bias); // think bias should be prev_state[1]
-    P_new[0][0] = P_prev[0][0] + dt * (dt*P_prev[1][1] - P_prev[0][1] - P_prev[1][0] + Q[0][0]);
-    P_new[0][1] = P_prev[0][1] - dt * P_prev[1][1];
-    P_new[1][0] = P_prev[1][0] - dt * P_prev[1][1];
-    P_new[1][1] = P_prev[1][1] + Q[1][1] * dt;
-    
-    //update
-    S = P_new[0][0] + R;
-    K[0] = P_new[0][0] / S;
-    K[1] = P_new[1][0] / S;
-    float Ktemp0 = K[0];
-    float Ktemp1 = K[1];
-
-    //y is difference between measured and predicted
-    float y = measured_angle - predicted_angle;
-    kalman_state[0] = predicted_angle + Ktemp0*y;
-    kalman_state[1] = bias + Ktemp1*y;
-    float P_final[2][2];
-    P_final[0][0] = P_new[0][0] - K[0]*P_new[0][0];
-    P_final[0][1] = P_new[0][1] - K[0]*P_new[0][1];
-    P_final[1][0] = P_new[1][0] - K[1]*P_new[0][0];
-    P_final[1][1] = P_new[1][1] - K[1]*P_new[0][1];
-    P_prev = P_final;
-    return kalman_state[0];
+float Contorl::PID(float roll, float pitch, float altitude, float desired_roll, float desired_pitch, float desired_altitude, long dt) {
   
+  float prev_roll_error = roll_error;
+  float prev_pitch_error = pitch_error;
+  float prev_altitude_error = altitude_error;
+
+  float roll_error = roll - desired_roll;
+  float pitch_error = pitch - desired_pitch;
+  float altitude_error = altitude - desired_altitude;
+  
+  float proportional_roll = Kp_r * roll_error;
+  float proportional_pitch = Kp_p * pitch_error;
+  float proportional_altitude = Kp_a * altitude_error;
+  
+  integral_roll += Ki_r * roll_error * dt;
+  integral_pitch += Ki_p * pitch_error * dt;
+  integral_altitude += Ki_a * altitude_error * dt;
+
+  float derivative_roll = Kd_r * (roll_error - prev_roll_error) / dt;
+  float derivative_pitch = Kd_p * (pitch_error - prev_pitch_error) / dt;
+  float derivative_altitude = Kd_a * (altitude_error - prev_altitude_error) / dt;
+
+  roll_motor_command = proportional_roll + integral_roll + derivative_roll;
+  pitch_motor_command = proportional_pitch + integral_pitch + derivative_pitch;
+  thrust_motor_command = proportional_altitude + integral_altitude + derivative_altitude;
+
+  if (thrust_motor_commands >= max_thrust){
+      thrust_motor_command = max_thrust;
+  } else if (thrust_motor_command < 0){
+      thrust_motor_command = 0;
+  }
+//   Serial.println("thrust command: ");
+//   Serial.print(thrust_motor_command);
+//   Serial.println("pitch command: ");
+//   Serial.print(pitch_motor_command);
+//   Serial.println("roll command: ");
+//   Serial.print(roll_motor_command);
+
+  esc_commands = {roll_motor_command, pitch_motor_command, thrust_motor_command};
 }
 
 
-void Control::return_attitude(float prev_roll, float prev_pitch){
-    if (mpu.update() == true){
-        long endTime = millis();
-        xacc = mpu.getAccX();
-        yacc = mpu.getAccY();
-        zacc = mpu.getAccZ();
-        roll_accel=atan(yacc/zacc) * 180/pi;
-        pitch_accel=atan(-xacc/pow((pow(yacc,2) + pow(zacc,2)),0.8)) * 180/pi;
-        xgyro = mpu.getGyroX(); // * 180/pi;
-        ygyro = mpu.getGyroY(); // * 180/pi; I think already in degrees/s
-        zgyro = mpu.getGyroZ(); // * 180/pi;
-        dt = endTime - startTime;
-        long startTime = millis();
-        filtered_roll_angle = kalman_filter(prev_roll, xgyro, roll_accel, bias, dt, P_prev, Q, R);
-        filtered_pitch_angle = kalman_filter(prev_pitch, ygyro, pitch_accel, bias, dt, P_prev, Q, R);
-    }
-}
-
-void Control::run_control()
+void Control::set_desired_position(Position& p)
 {
-    // Serial.println(" IN WHILE LOOP IN RUN_CONTROL");
-    return_attitude(prev_roll, prev_pitch);
+    target_pos = p;
+}
+
+
+void Control::run_control(float roll, float pitch)
+{
+    long new_t = millis();
+    dt = new_t - t;
+    p = Position(0,0,0.3,0,0,0);
+    target_pos = p;
+    // if (drone_mode == "HOVER"){
+    //     target_pos = pos;
+    // } else if (drone_mode == "TAKEOFF"){
+    //     float takeoff_height = 2;
+    //     Position p(0,0,takeoff_height,0,0,0);
+    //     target_pos = p;
+    // }
+    esc_commands = PID(roll, pitch, pos.z, target_pos.roll, target_pos.pitch, target_pos.yaw, dt);
     // Serial.print("\n roll: ");
-    // Serial.print(filtered_roll_angle);
+    // Serial.print(atitude[0]);
     // Serial.print("\n pitch: ");
-    // Serial.print(filtered_pitch_angle);
-    prev_roll = filtered_roll_angle;
-    prev_pitch = filtered_pitch_angle;
+    // Serial.print(atitude[1]);
+    // prev_roll = atitude[0];
+    // prev_pitch = atitude[1];
     // run esc:
     // esc_val_1 = map(prev_roll, 0, 90, 1000, 1500); 
     // esc_val_2 = map(prev_roll, 0, 90, 1000, 1500); 
@@ -157,11 +144,23 @@ void Control::run_control()
     // esc_1.writeMicroseconds(esc_val_1);
     // esc_2.writeMicroseconds(esc_val_2);
     delay(50);
-    //vTaskDelay(100);
 }
 
-void Control::set_mode(String new_mode)
-{
-    drone_mode = new_mode;
+
+void Control::motor_command()
+{  
+    float throttle_ratio = esc_commands[-1] / max_thrust;
+    float pitch_ratio = pitch / 90;
+    float roll_ratio = roll / 90;
+    esc_val_fr = map(throttle_ratio + pitch_ratio + roll_ratio, -2, 3, 1000, 1500);
+    esc_val_fl = map(throttle_ratio + pitch_ratio - roll_ratio, -2, 3, 1000, 1500);
+    esc_val_br = map(throttle_ratio - pitch_ratio - roll_ratio, -2, 3, 1000, 1500);
+    esc_val_bl = map(throttle_ratio - pitch_ratio - pitch_ratio, -2, 3, 1000, 1500);
+    esc_fr.writeMicroseconds(esc_val_fr);
+    esc_fl.writeMicroseconds(esc_val_fl); // change these to esc_1, esc_2 etc..
+    esc_br.writeMicroseconds(esc_val_br);
+    esc_bl.writeMicroseconds(esc_val_bl);
 }
+
+
 #endif
