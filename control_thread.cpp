@@ -1,9 +1,9 @@
-#include <Arduino.h>
-#if defined (ARDUINO_AVR_UNO)
+// #include <Arduino.h>
+//#if defined (ARDUINO_AVR_UNO)
 
-#include <Servo.h>
-#include <Wire.h>
-#include <MPU9250.h>
+// #include <Servo.h>
+// #include <Wire.h>
+// #include <MPU9250.h>
 #include "control_thread.h"
 
 
@@ -77,13 +77,6 @@ Control::Control(int pin1, int pin2) : Drone(pin1, pin2)
     //Serial.print("2");
 }
 
-void Control::set_params(int esc_1_pin, int esc_2_pin)
-{
-
-    /*
-    
-    */
-}
 
 
 
@@ -104,23 +97,29 @@ float Control::PID() {
     float proportional_pitch = Kp_p * pitch_error;
     float proportional_altitude = Kp_a * altitude_error;
     
-    integral_roll += Ki_r * roll_error * dt;
-    integral_pitch += Ki_p * pitch_error * dt;
-    integral_altitude += Ki_a * altitude_error * dt;
+    // integral_roll += Ki_r * roll_error * dt;
+    // integral_pitch += Ki_p * pitch_error * dt;
+    // integral_altitude += Ki_a * altitude_error * dt;
 
-    float derivative_roll = Kd_r * (roll_error - prev_roll_error) / dt;
-    float derivative_pitch = Kd_p * (pitch_error - prev_pitch_error) / dt;
-    float derivative_altitude = Kd_a * (altitude_error - prev_altitude_error) / dt;
+    // float derivative_roll = Kd_r * (roll_error - prev_roll_error) / dt;
+    // float derivative_pitch = Kd_p * (pitch_error - prev_pitch_error) / dt;
+    // float derivative_altitude = Kd_a * (altitude_error - prev_altitude_error) / dt;
 
-    roll_motor_command = proportional_roll + integral_roll + derivative_roll;
-    pitch_motor_command = proportional_pitch + integral_pitch + derivative_pitch;
-    thrust_motor_command = proportional_altitude + integral_altitude + derivative_altitude;
+    roll_motor_command = proportional_roll;// + integral_roll + derivative_roll;
+    pitch_motor_command = proportional_pitch;// + integral_pitch + derivative_pitch;
+    thrust_motor_command = proportional_altitude;// + integral_altitude + derivative_altitude;
 
-    if (thrust_motor_command >= max_thrust){
-        thrust_motor_command = max_thrust;
-    } else if (thrust_motor_command < 0){
-        thrust_motor_command = 0;
-    }
+    // if (thrust_motor_command >= max_thrust){
+    //     thrust_motor_command = max_thrust;
+    // } else if (thrust_motor_command < 0){
+    //     thrust_motor_command = 0;
+    // }
+    // if (pitch_motor_command >= max_thrust){
+    //     pitch_motor_command = max_thrust;
+    // }
+    // if (roll_motor_command >= max_thrust){
+    //     roll_motor_command = max_thrust;
+    // }
     //   Serial.println("thrust command: ");
     //   Serial.print(thrust_motor_command);
     //   Serial.println("pitch command: ");
@@ -148,7 +147,6 @@ void Control::run_control()
     //     target_pos = p;
     // }
 
-    //esc_commands = PID(pos.roll, pos.pitch, pos.z, target_pos.roll, target_pos.pitch, target_pos.yaw, dt);
     PID();
     
     motor_command();
@@ -175,10 +173,15 @@ void Control::run_control()
 
 void Control::motor_command()
 {  
+    Serial.println('|');
+    Serial.println(thrust_motor_command);
+    Serial.println(roll_motor_command);
+    Serial.println(pitch_motor_command);
     float throttle_ratio = thrust_motor_command / max_thrust;
     float pitch_ratio = pitch_motor_command / max_thrust;
     float roll_ratio = roll_motor_command / max_thrust;
-    esc_val_fr = map(throttle_ratio + pitch_ratio + roll_ratio, -2, 3, 1000, 1500);
+    esc_val_fr = map(throttle_ratio + pitch_ratio + roll_ratio, -2, 3, 1000, 1300);
+    Serial.println(esc_val_fr);
     // esc_val_fl = map(throttle_ratio + pitch_ratio - roll_ratio, -2, 3, 1000, 1500);
     // esc_val_br = map(throttle_ratio - pitch_ratio - roll_ratio, -2, 3, 1000, 1500);
     // esc_val_bl = map(throttle_ratio - pitch_ratio - pitch_ratio, -2, 3, 1000, 1500);
@@ -189,4 +192,4 @@ void Control::motor_command()
 }
 
 
-#endif
+//#endif

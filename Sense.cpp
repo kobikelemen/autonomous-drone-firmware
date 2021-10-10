@@ -16,12 +16,12 @@ IMU::IMU(int opin, int ipin) : Sensor(opin, ipin)
     delay(1000);
     if (!mpu.setup(0x68)) {
         while (1) {
-        Serial.println("MPU connection failed. Please check your connection");
+        // Serial.println("MPU connection failed. Please check your connection");
         delay(3000);
         }
     }
-    Serial.println("Accel Gyro calibration will start in 1sec.");
-    Serial.println("Please leave the device still on the flat plane.");
+    Serial.println("callibration in 1sec.");
+    // Serial.println("Please leave the device still on the flat plane.");
     mpu.verbose(true);
     delay(1000);
     mpu.calibrateAccelGyro();
@@ -91,6 +91,8 @@ void IMU::return_atitude()
 }
 
 
+
+
 Sonar::Sonar(int opin, int ipin) : Sensor(opin, ipin) {};
 
 float Sonar::get_distance()
@@ -104,6 +106,7 @@ float Sonar::get_distance()
     distance = t*0.00034/2;
     return distance;
 }
+
 
 
 

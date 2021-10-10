@@ -1,4 +1,6 @@
 
+
+
 #if defined(ESP32)
 #include <Arduino.h>
 #include "LocalServer.h"
@@ -44,17 +46,17 @@ String send_html(String mode_){
   ptr +="<h3>Using Access Point(AP) Mode</h3>\n";
 
 
-  /*
-   if(mode_ == "land")
-  {ptr +="<p>MODE: ON</p><a class=\"button button-off\" href=\"/mode_\">LAND</a>\n";}
-  else if (mode_ == "takeoff)
-  {ptr +="<p>MODE: OFF</p><a class=\"button button-on\" href=\"/led1on\">ON</a>\n";}
+  
+  //  if(mode_ == "land")
+  // {ptr +="<p>MODE: ON</p><a class=\"button button-off\" href=\"/mode_\">LAND</a>\n";}
+  // else if (mode_ == "takeoff)
+  // {ptr +="<p>MODE: OFF</p><a class=\"button button-on\" href=\"/led1on\">ON</a>\n";}
 
-  if(led2stat)
-  {ptr +="<p>LED2 Status: ON</p><a class=\"button button-off\" href=\"/led2off\">OFF</a>\n";}
-  else
-  {ptr +="<p>LED2 Status: OFF</p><a class=\"button button-on\" href=\"/led2on\">ON</a>\n";}
-  */
+  // if(led2stat)
+  // {ptr +="<p>LED2 Status: ON</p><a class=\"button button-off\" href=\"/led2off\">OFF</a>\n";}
+  // else
+  // {ptr +="<p>LED2 Status: OFF</p><a class=\"button button-on\" href=\"/led2on\">ON</a>\n";}
+  
   
   ptr +="</body>\n";
   ptr +="</html>\n";
@@ -64,3 +66,4 @@ String send_html(String mode_){
 
 
 #endif
+

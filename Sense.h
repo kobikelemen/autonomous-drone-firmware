@@ -28,7 +28,6 @@ public:
     float prev_angle_estimate = 0;
     float R = 0.03, bias = 0;
     float roll = 0, pitch = 0;
-    float * atitude = new float[2];
     float xacc, yacc, zacc, pitch_accel, roll_accel, xgyro, ygyro, zgyro, filtered_roll_angle, filtered_pitch_angle, angle, ang_vel, prev_angle, measured_angle, altitude;
     MPU9250 mpu;
     void return_atitude();
@@ -36,6 +35,8 @@ public:
     IMU(int opin, int ipin);
 
 }; 
+
+
 
 class Sonar : Sensor
 {
