@@ -9,21 +9,8 @@ Sensor::Sensor(int opin, int ipin)
 }
 
 
-float Sonar::get_distance()
-{
-    digitalWrite(outpin, LOW);
-    delayMicroseconds(2);
-    digitalWrite(outpin, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(outpin, LOW);
-    t = pulseIn(inpin, HIGH);
-    distance = t*0.00034/2;
-    return distance;
-}
 
-
-
-IMU::IMU()
+IMU::IMU(int opin, int ipin) : Sensor(opin, ipin)
 {
     Wire.begin();
     delay(1000);
@@ -78,7 +65,7 @@ float IMU::kalman_filter(float angle, float ang_vel, float measured_angle, float
   
 }
 
-float IMU::return_atitude()
+void IMU::return_atitude()
 {
     if (mpu.update() == true){
         //long endTime = millis();
@@ -97,10 +84,26 @@ float IMU::return_atitude()
         filtered_roll_angle = kalman_filter(roll, xgyro, roll_accel, bias, dt, P_prev, Q, R);
         filtered_pitch_angle = kalman_filter(pitch, ygyro, pitch_accel, bias, dt, P_prev, Q, R);
     }
-    atitude[2] = {filtered_roll_angle, filtered_pitch_angle};
-    return *atitude;
+    //atitude[2] = {filtered_roll_angle, filtered_pitch_angle};
+    roll = filtered_roll_angle;
+    pitch = filtered_pitch_angle;
+    //return atitude;
 }
 
+
+Sonar::Sonar(int opin, int ipin) : Sensor(opin, ipin) {};
+
+float Sonar::get_distance()
+{
+    digitalWrite(outpin, LOW);
+    delayMicroseconds(2);
+    digitalWrite(outpin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(outpin, LOW);
+    t = pulseIn(inpin, HIGH);
+    distance = t*0.00034/2;
+    return distance;
+}
 
 
 

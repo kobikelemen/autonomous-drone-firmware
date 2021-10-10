@@ -7,63 +7,56 @@
 #include <MPU9250.h>
 
 
-struct Position
+class Position
 {
 public:
     float x, y, z, roll, pitch, yaw;
-    Position(float _x, float _y, float _z, float _roll, float _pitch, float _yaw)
-    {
-        x = _x;
-        y = _y;
-        z = _z;
-        roll = _roll;
-        pitch = _pitch;
-        yaw = _yaw;
-    }
+    Position();
+    Position(float _x, float _y, float _z, float _roll, float _pitch, float _yaw);
 };
 
 
 class Drone
 {
+public: 
     Position pos;
-    Positon target_pos;
-    Servo esc_fr, esc_fl, esc_br, esc_bl;
-    int esc_fr_pin, esc_fl, esc_br, esc_bl;
+    Position target_pos;
+    int esc_fr_pin, esc_fl_pin, esc_br_pin, esc_bl_pin;
     float esc_val_fr, esc_val_fl, esc_val_br, esc_val_bl;
     String drone_mode;
     long t;
     long dt;
-public:
-    Drone(int pin1, int pin2);
+    Servo esc_fr, esc_fl, esc_br, esc_bl;
+    Drone(int pinfr, int pinbl);
     void set_mode(String _mode);
-    void update_position(Position& p);
-    void set_target(Position& p)
+    void update_position(float x, float y, float z, float r, float p, float ya);
+    void set_target(float x, float y, float z, float r, float p, float ya);
 };
 
 
 
 
-class Control : Drone
+class Control : public Drone
 {
+public:
     float desired_roll, desired_pitch, desired_altitude, throttle, yaw, current_height, desired_height;
     float thrust_motor_command, pitch_motor_command, roll_motor_command;
     float Kp_r = 1, Kp_p = 1, Kp_a = 1, Ki_r = 1, Ki_p = 1, Ki_a = 1, Kd_r = 1, Kd_p = 1, Kd_a = 1;
-    float roll_error = 0, pitch_error = 0, altitude_error = 0, integral_roll = 0, integral_pitch = 0, integral_altitude = 0; // for PID loop
+    float roll_error, pitch_error, altitude_error, integral_roll, integral_pitch, integral_altitude; // for PID loop
     long dt;
     long startTime = millis();
     float prev_roll = 0;
     float prev_pitch = 0;
     float prev_roll_angle = 0;
     float prev_pitch_angle = 0;
-    float esc_commands[3];
+    //float esc_commands[3];
     float max_thrust = 20; // Newtons
     //Control(int esc_1_pin, int esc_2_pin);
-public:
-    Control();
-    void run_control(float roll, float pitch);
+    Control(int pin1, int pin2);
+    void run_control();
     void set_params(int esc_1_pin, int esc_2_pin);
-    void motor_command(float throttle, float roll, float pitch, float yaw);
-    float PID(float roll, float pitch, float altitude, float desired_roll, float desired_pitch, float desired_altitude, long dt);
+    void motor_command();
+    float PID();
 };
 
 
