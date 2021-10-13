@@ -33,7 +33,7 @@ public:
     void set_target(float x, float y, float z, float r, float p, float ya);
 };
 
-
+float _map(float x, float in_min, float in_max, float out_min, float out_max);
 
 
 class Control : public Drone

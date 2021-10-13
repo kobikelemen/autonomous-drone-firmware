@@ -93,18 +93,26 @@ void IMU::return_atitude()
 
 
 
-Sonar::Sonar(int opin, int ipin) : Sensor(opin, ipin) {};
+Sonar::Sonar(int opin, int ipin) : Sensor(opin, ipin) 
+{
+}
 
 float Sonar::get_distance()
 {
+    long t_;
+    float distance_;
+    pinMode(outpin, OUTPUT);
     digitalWrite(outpin, LOW);
     delayMicroseconds(2);
     digitalWrite(outpin, HIGH);
     delayMicroseconds(10);
     digitalWrite(outpin, LOW);
-    t = pulseIn(inpin, HIGH);
-    distance = t*0.00034/2;
-    return distance;
+    pinMode(inpin, INPUT);
+    t_ = pulseIn(inpin, HIGH);
+    distance_ = t_*0.00034/2;
+    Serial.println("distance_: "); // check Arduino/random/test_sonar for working sonar
+    Serial.println(distance_);
+    return distance_;
 }
 
 

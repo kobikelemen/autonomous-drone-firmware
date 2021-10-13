@@ -10,6 +10,10 @@
 // 9 & 10 are esc pings...
 //Control controller(9, 10);
 
+float _map(float x, float in_min, float in_max, float out_min, float out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 Position::Position(float _x, float _y, float _z, float _roll, float _pitch, float _yaw)
 {
     x = _x;
@@ -173,14 +177,14 @@ void Control::run_control()
 
 void Control::motor_command()
 {  
-    Serial.println('|');
-    Serial.println(thrust_motor_command);
-    Serial.println(roll_motor_command);
-    Serial.println(pitch_motor_command);
+    // Serial.println('|');
+    // Serial.println(thrust_motor_command);
+    // Serial.println(roll_motor_command);
+    // Serial.println(pitch_motor_command);
     float throttle_ratio = thrust_motor_command / max_thrust;
     float pitch_ratio = pitch_motor_command / max_thrust;
     float roll_ratio = roll_motor_command / max_thrust;
-    esc_val_fr = map(throttle_ratio + pitch_ratio + roll_ratio, -2, 3, 1000, 1300);
+    esc_val_fr = _map(throttle_ratio + pitch_ratio + roll_ratio, -2, 3, 1000, 1300);
     Serial.println(esc_val_fr);
     // esc_val_fl = map(throttle_ratio + pitch_ratio - roll_ratio, -2, 3, 1000, 1500);
     // esc_val_br = map(throttle_ratio - pitch_ratio - roll_ratio, -2, 3, 1000, 1500);
