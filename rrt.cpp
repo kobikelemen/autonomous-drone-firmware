@@ -1,8 +1,9 @@
-#include <math.h>
+#include <cmath>
 #include <vector>
 #include <iostream>
 #include <algorithm>
-
+#include <chrono>
+#include <thread>
 
 float max(std::vector<float> x);
 float min(std::vector<float> x);
@@ -158,20 +159,28 @@ Point get_random(std::vector<Point> boundary, std::vector<Point> obstacles)
     bool check = false;
     float x_check, y_check, z_check;
     Point p_max(max(x_boundaries), max(y_boundaries), max(z_boundaries));
-    Point p_min(min(x_boundaries), max(y_boundaries), max(z_boundaries));
+    Point p_min(min(x_boundaries), min(y_boundaries), min(z_boundaries));
 
     while (!check){
         x_check = rand_num(p_max.x, p_min.x);
         y_check = rand_num(p_max.y, p_min.y);
         z_check = rand_num(p_max.z, p_min.z);
-        if (x_check < p_max.x && x_check > p_min.x && y_check < p_max.y && y_check > p_min.y && z_check > p_max.z && z_check < p_min.z){
-            // havent checked if in obstacle yet ... !
+        //std::cout << "HIII" << std::endl;
+        if (x_check < p_max.x && x_check > p_min.x && y_check < p_max.y && y_check > p_min.y){ //} && z_check > p_max.z && z_check < p_min.z){
+            // havent checked if in obstacle yet ... or FOR Z!
             Point p(x_check, y_check, z_check);
             return p;
         }
+        //std::this_thread::sleep_for(std::chrono::nanoseconds(1e9));
+        using namespace std::this_thread; // sleep_for, sleep_until
+        using namespace std::chrono; // nanoseconds, system_clock, seconds
 
+        // sleep_for(nanoseconds(1000000000));
+        // std::cout << "x_check: " << x_check << std::endl << "y_check: " << y_check << std::endl << "z_check: " << z_check << std::endl;
 
     }
+    Point p_(0,0,0);
+    return p_;
 }
 
 Point chain(Point nearest, Point new_p, float max_step_size)
@@ -224,6 +233,7 @@ std::vector<Node> rrt(
     std::vector<Point> obstacles
     )
 {
+    std::cout << "rrt... " << std::endl;
     int counter = 0;
     G.add_node(start_node);
     //std::vector<Point> visited_pos;
@@ -238,39 +248,65 @@ std::vector<Node> rrt(
         Node new_node(new_point_connections, new_point, depth);
         nearest->add_connection(new_node);
         G.add_node(new_node);
-        if (new_point.in_goal(goal)){
-            std::vector<Node> path = get_path(G, new_node);
-            print_graph(G);
-            return path;
-        }
-        counter++;
+        // if (new_point.in_goal(goal)){
+        //     std::vector<Node> path = get_path(G, new_node);
+        //     print_graph(G);
+        //     return path;
+        // }
+        // counter++;
+
+        std::vector<Node> hi;
+        return hi;
     }
+    std::cout << "counter end: " << counter << std::endl;
     std::vector<Node> pt;
     return pt;
 
 }
 
 
+void test_random()
+{
+    std::vector<Point> boundary;
+    Point p1(0,0,0), p2(0,1,0), p3(1,0,0), p4(1,1,0);
+    boundary.push_back(p1);
+    boundary.push_back(p2);
+    boundary.push_back(p3);
+    boundary.push_back(p4);
+    std::vector<Point> obstacles;
+    std::cout << "YOOOO";
+    Point r = get_random(boundary, obstacles);
+    std::cout << r.x << " " << r.y << " " << r.z << std::endl;
+}
 
-int main()
+void test_rrt()
 {
     Point p1(6,6,0), p2(5,5,0), p3(5,6,0), p4(6,5,0), start_pos(0,0,0), b1(0,0,0), b2(20,20,0), b3(0,20,0), b4(20,0,0);
-    std::vector<Point> goal; // = {p1,p2,p3,p4};
+    std::vector<Point> goal; 
     goal.push_back(p1);
     goal.push_back(p2);
     goal.push_back(p3);
     goal.push_back(p4);
-    std::vector<Node> connections; // = {};
+    std::vector<Node> connections;
     Node start_node(connections, start_pos, 1);
+    std::cout << "HO";
     Graph G;
     float step_size = 0.1;
     int lim = 1000;
-    std::vector<Point> boundary; // = {b1, b2, b3, b4};
+    std::vector<Point> boundary;
     boundary.push_back(b1);
     boundary.push_back(b2);
     boundary.push_back(b3);
     boundary.push_back(b4);
-    std::vector<Point> obstacles; // = {};
+    std::vector<Point> obstacles;
     rrt(goal, start_node, lim, G, step_size, boundary, obstacles);
+}
+
+
+
+
+int main()
+{
+    test_rrt();
     return 0;
 }
