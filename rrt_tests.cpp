@@ -1,5 +1,21 @@
 #include <iostream>
 #include <vector>
+#include "rrt.cpp"
+
+
+void test_remove(){
+    std::vector<Vector> v;
+    Vector p1(1,1,1), p2(2,2,2), p3(3,3,3), p4(4,4,4);
+    v.push_back(p1);
+    v.push_back(p2);
+    v.push_back(p3);
+    v.push_back(p4);
+    Shape s(v);
+    s.remove(p2);
+    for (int i=0; i < s.bound_list.size(); i++){
+        std::cout << "(" << s.bound_list[i].x << "," << s.bound_list[i].y << "," << s.bound_list[i].z << ")" << std::endl;
+    }
+} // passed
 
 
 

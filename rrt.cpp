@@ -9,44 +9,6 @@ float max(std::vector<float> x);
 float min(std::vector<float> x);
 
 
-class Shape
-{
-public:
-    // each vertex is relative from drone
-    std::vector<Vector> boundary;
-
-    Shape(std::vector<Vector> bound){
-        boundary = bound;
-    }
-
-    float calc_interior_angle(Vector p1, Vector p2, Vector p3){
-        Vector p21 = p2;
-        p21.minus_vec(p1);
-        Vector p23 = p2;
-        p23.minus_vec(p3);
-        float d = p21.dot_product(p23);
-        float angle = acos(d/(p21.magnitude() * p23.magnitude()));
-        return angle; // returns angle in radians I believe
-    }
-
-    std::vector<Shape> triangulate(){
-        std::vector<Shape> triangles;
-        std::vector<float> interior_angles;
-        for (int i=1; i < boundary.size(); i+= 3){
-            interior_angles.push_back(calc_interior_angle(
-                boundary[i-1],
-                boundary[i],
-                boundary[i+1]
-            ));
-        }
-        // complete rest of triangulation algo... (link here):
-        // https://arxiv.org/pdf/1212.6038.pdf#:~:text=The%20ear%20clipping%20triangulation%20algorithm,newly%20formed%20triangle%20is%20valid.
-
-    }
-
-
-};
-
 
 class Vector
 {
@@ -59,6 +21,7 @@ class Vector
         y = _y;
         z = _z;
     }
+    Vector(){}
 
     float magnitude(){
         return sqrt(pow(x,2) + pow(y,2) + pow(z,2));
@@ -106,6 +69,106 @@ class Vector
         }
         return false;
     }
+
+};
+
+
+
+class Shape
+{
+public:
+    // each vertex is relative from drone
+    std::vector<Vector> bound_list;
+
+    Shape(std::vector<Vector> bound){
+        bound_list = bound;
+    }
+
+    float calc_interior_angle(Vector p1, Vector p2, Vector p3){
+        Vector p21 = p2;
+        p21.minus_vec(p1);
+        Vector p23 = p2;
+        p23.minus_vec(p3);
+        float d = p21.dot_product(p23);
+        float angle = acos(d/(p21.magnitude() * p23.magnitude()));
+        return angle; // returns angle in radians I believe
+    }
+
+    // check if point is inside triangle
+    float sign(Vector p1, Vector p2, Vector p3)
+    {
+        return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
+    }
+
+    bool check_in_triangle(Vector pt, Vector v1, Vector v2, Vector v3)
+    {
+        float d1, d2, d3;
+        bool has_neg, has_pos;
+        d1 = sign(pt, v1, v2);
+        d2 = sign(pt, v2, v3);
+        d3 = sign(pt, v3, v1);
+        has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+        has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+        return !(has_neg && has_pos);
+    }
+
+    //
+
+    void remove(Vector p){
+        bool test = false;
+        int i=0;
+        while (!test){
+            if (bound_list[i].x == p.x && bound_list[i].y == p.y && bound_list[i].z == p.z){
+                std::vector<Vector> b;
+                for (int j=0; j < bound_list.size(); j++){
+                    if (i != j){
+                        std::cout << "i" << std::endl;
+                        Vector p(bound_list[j].x, bound_list[j].y, bound_list[j].z);
+                        b.push_back(p);
+                    }
+                }
+                bound_list = b;
+                test = true;
+            }
+            i++;
+        }
+    }
+
+
+    std::vector<Shape> triangulate(){
+        Shape bound_copy(bound_list);
+        std::vector<Shape> triangles;
+        std::vector<float> interior_angles;
+        for (int i=1; i < bound_copy.bound_list.size()-1; i++){
+            Vector p1 = bound_copy.bound_list[i-1];
+            Vector p2 = bound_copy.bound_list[i];
+            Vector p3 = bound_copy.bound_list[i+1];
+            float angle = calc_interior_angle(p1, p2, p3);
+            std::cout << "angle: " << angle << std::endl;
+            if (angle < M_PI/2){
+                bool check = false;
+                for (int j=0; j < bound_copy.bound_list.size(); j++){
+                    if (j!=i-1 && j!=i && j!=i+1){
+                        check = check_in_triangle(bound_copy.bound_list[j],p1, p2,p3);
+                        break;
+                    }
+                }
+                if (!check){
+                    std::vector<Vector> tri;
+                    tri.push_back(p1);
+                    tri.push_back(p2);
+                    tri.push_back(p3);
+                    Shape new_triangle(tri);
+                    triangles.push_back(new_triangle);
+                } 
+            }
+        }
+    return triangles;
+        // complete rest of triangulation algo... (link here):
+        // https://arxiv.org/pdf/1212.6038.pdf#:~:text=The%20ear%20clipping%20triangulation%20algorithm,newly%20formed%20triangle%20is%20valid.
+
+    }
+
 
 };
 
@@ -242,7 +305,9 @@ Vector get_random(std::vector<Vector> bound, std::vector<Vector> obstacles)
     Shape boundary(bound);
     std::vector<Shape> triangles = boundary.triangulate();
 
-    //
+    //  UNFINISHED...
+    Vector rnd;
+    return rnd;
 }
 
 
@@ -325,9 +390,41 @@ std::vector<Node> rrt(
 
 }
 
+void test_triangulate(){
+    std::vector<Vector> v;
+    Vector p1(0,0,0), p2(1,2,0), p3(1,0,0), p4(-2,1,0);
+    v.push_back(p1);
+    v.push_back(p2);
+    v.push_back(p3);
+    v.push_back(p4);
+    Shape s(v);
+    std::vector<Shape> tris = s.triangulate();
+    std::cout << "tris size: " << tris.size();
+    for (int i=0; i < tris.size(); i++){
+        std::cout << "triangle " << i << std::endl;
+        for (int j=0; j < tris[i].bound_list.size(); j++){
+            std::cout << "(" << tris[i].bound_list[j].x << "," << tris[i].bound_list[j].y << "," << tris[i].bound_list[j].z << ")";
+        }
+    }
+
+}
+
+void test_calc_angle(){
+    std::vector<Vector> v;
+    Vector p1(0,0,0), p2(1,0,0), p3(1,1,0), p4(0,1,0);
+    v.push_back(p1);
+    Shape s(v);
+    float angle = s.calc_interior_angle(p1,p2,p3);
+    std::cout << angle;
+}
+
+
+
 
 int main()
 {
     //test_rrt();
+    test_triangulate();
+    // test_calc_angle();
     return 0;
 }
