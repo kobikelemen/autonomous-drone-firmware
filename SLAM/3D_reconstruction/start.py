@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
-from igraph import *
+#from igraph import *
+from scene_graph import Scene_graph, Image
 
 def hi():
     capture = cv.VideoCapture('house_tour.mp4')
@@ -24,12 +25,13 @@ def save_frames(graph):
     imgs = {}
     count = 0
     for i in range(0, 100000, 4000):
-        graph.add_vertices(1)
         isTrue, frame = capt.read()
         kp = orb.detect(frame, None)
         kp, des = orb.compute(frame, kp)
         img2 = cv.drawKeypoints(frame, kp, None, color=(0,255,0), flags=0)
-        imgs[img2] = (kp, des)
+        img = Image(i, kp, des)
+        graph.add_frame(img)
+        #imgs[i] = [kp, des]
         cv.imwrite('/Users/kobikwlemen/Documents/programming/python stuff/open_test/frames/f' + str(i) + '.jpg', img2)
         count += 1
     capt.release()
@@ -41,23 +43,27 @@ def save_frames(graph):
 
 def image_correspondances(graph, imgs, no_images=25):
     bf = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
-    #imgs = []
-    #matches = []
 
     #for image in range(no_images):
     #    imgs.append(cv.imread('/Users/kobikelemen/Documents/programming/python stuff/open_test/frames/f'+str(image)+'.jpg'))
 
+    imgs = graph.get_frames()
     for img in imgs:
+        
         for check_img in imgs:
-            if check_img[1] != img[1]:
-                matches = bf.match(check_img[1], img[1])
+            # print(imgs[img][1], 'yooo')
+            # print(imgs[check_img][1], 'yooo')
+            if imgs[check_img][1].any() == imgs[img][1].any():
+                matches = bf.match(imgs[check_img][1], imgs[img][1])
                 matches = sorted(matches, key=lambda x: x.distance)
                 if len(matches) > 0:
-                    pass
+                    #print('hi')
+                    print('pair: ', img, check_img)
+
 
 
 
 if __name__ == '__main__':
-    graph = Graph()
-    imgs, count = save_frames(graph)
-    image_correspondances(graph, imgs, count)
+    scene_graph = Scene_graph(path_='/Users/kobikelemen/Documents/programming/python stuff/open_test/frames')
+    imgs, count = save_frames(scene_graph)
+    image_correspondances(scene_graph, imgs, count)
