@@ -24,16 +24,20 @@ def save_frames(graph):
     orb = cv.ORB_create()
     imgs = {}
     count = 0
-    for i in range(0, 100000, 4000):
+    # for index, i in enumerate(range(0, 3000000, 80000)):
+    for i in range(1000):
         isTrue, frame = capt.read()
-        kp = orb.detect(frame, None)
-        kp, des = orb.compute(frame, kp)
-        img2 = cv.drawKeypoints(frame, kp, None, color=(0,255,0), flags=0)
-        img = Image(i, kp, des)
-        graph.add_frame(img)
-        #imgs[i] = [kp, des]
-        cv.imwrite('/Users/kobikwlemen/Documents/programming/python stuff/open_test/frames/f' + str(i) + '.jpg', img2)
-        count += 1
+
+        if i % 30 == 0:
+            
+            kp = orb.detect(frame, None)
+            kp, des = orb.compute(frame, kp)
+            img2 = cv.drawKeypoints(frame, kp, None, color=(0,255,0), flags=0)
+            img = Image(count, kp, des)
+            graph.add_frame(img)
+            #imgs[i] = [kp, des]
+            cv.imwrite('/Users/kobikelemen/Documents/programming/python stuff/open_test/frames/f' + str(count) + '.jpg', img2)
+            count += 1
     capt.release()
     return imgs, count
     # 1. use igraph library to make un associated graph corresponding to image frames
@@ -41,24 +45,36 @@ def save_frames(graph):
     # 3. update graph edges to reflect this
     # 4. continue with YT lecture -> RANSAC and bag of worlds
 
-def image_correspondances(graph, imgs, no_images=25):
+
+def image_correspondances(scene_graph, imgs, no_images=25):
     bf = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
 
     #for image in range(no_images):
     #    imgs.append(cv.imread('/Users/kobikelemen/Documents/programming/python stuff/open_test/frames/f'+str(image)+'.jpg'))
 
-    imgs = graph.get_frames()
+    imgs = scene_graph.get_frames()
     for img in imgs:
-        
         for check_img in imgs:
-            # print(imgs[img][1], 'yooo')
-            # print(imgs[check_img][1], 'yooo')
-            if imgs[check_img][1].any() == imgs[img][1].any():
-                matches = bf.match(imgs[check_img][1], imgs[img][1])
+            if img != check_img:
+                # if check_img.desc.any() == img.desc.any():
+                matches = bf.match(check_img.desc, img.desc)
                 matches = sorted(matches, key=lambda x: x.distance)
-                if len(matches) > 0:
-                    #print('hi')
-                    print('pair: ', img, check_img)
+                print('checking frame '+ str(img.frame_no) + ' with frame ' + str(check_img.frame_no))
+                print('len(matches): ', len(matches))
+                print('smallest distance: ', matches[0].distance)
+
+                # good = []
+                # for n,m in matches:
+                #     if m.distance < 0.75 * n.distance:
+                #         scene_graph.add_connection(img, check_img)
+                if matches[0].distance < 20:
+                    scene_graph.add_connection(img, check_img)
+                    
+    scene_graph.print_graph()
+
+
+    # img_test = cv.drawMatchesBF(scene_graph.frames[0] )
+
 
 
 
