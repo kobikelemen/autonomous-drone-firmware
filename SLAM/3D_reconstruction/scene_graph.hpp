@@ -6,16 +6,24 @@
 
 
 
+struct Edge
+{
+    int v;
+    std::vector<cv::DMatch> matches;
+};
+
+
 class Image
 {
 public:
     int frame_no;
     cv::Mat frame;
-    std::vector<int> connections;
+    std::vector<Edge> connections;
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat descriptor;
     Image(int frame_no,  std::vector<cv::KeyPoint> keypoints, cv::Mat descriptor, cv::Mat frame);
     void add_connection(int c);
+    std::vector<cv::DMatch> get_matches(int u);
     std::vector<int> get_connection_indexes();
 
 };
@@ -29,6 +37,6 @@ public:
     std::vector<Image> get_frames(void);
     Image* get_frame(int frame_num);
     Scene_graph();
-    void add_connection(int f1, int f2);
+    void add_connection(int frame1, int frame2, std::vector<cv::DMatch> matches);
     void initialise(Image img1, Image img2); // fundamental matrix + triangulation
 };

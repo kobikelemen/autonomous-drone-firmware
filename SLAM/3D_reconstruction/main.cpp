@@ -28,6 +28,7 @@ void save_frames(Scene_graph &g)
             Image img(t, kp, desc, f);
             first_two.push_back(img);
             g.add_frame(img);
+            image_correspondances(g, img);
         }
     }
     g.initialise(first_two[0], first_two[1]);
@@ -42,6 +43,7 @@ void save_frames(Scene_graph &g)
             int t = frame_num/30;
             Image img(t, kp, desc, f);
             g.add_frame(img);
+            image_correspondances(g, img);
 
             cv::Mat imgkp;
             cv::drawKeypoints(f, kp, imgkp);
@@ -59,26 +61,27 @@ bool check(cv::DMatch i, cv::DMatch j) {
     return i.distance < j.distance;
 }
 
-void image_correspondances(Scene_graph &g)
+std::vector<cv::DMatch> image_correspondances(Scene_graph &g, Image img)
 {
     std::vector<Image> imgs = g.get_frames();
     cv::BFMatcher matcher(cv::NORM_HAMMING2, true);
 
-    for (Image img : imgs) {
-        for (Image check_img : imgs) {
-            if (img.frame_no != check_img.frame_no) {
-                std::vector<cv::DMatch> matches;
-                matcher.match(img.descriptor, check_img.descriptor, matches);
-                std::sort(matches.begin(),matches.end(), check);
-                if (matches.front().distance < 20) {
-                    g.add_connection(img.frame_no, check_img.frame_no);
-                }
+    for (Image check_img : imgs) {
+        if (img.frame_no != check_img.frame_no) {
+            std::vector<cv::DMatch> matches;
+            matcher.match(img.descriptor, check_img.descriptor, matches);
+            std::sort(matches.begin(),matches.end(), check);
+            if (matches.front().distance < 20) {
+                g.add_connection(img.frame_no, check_img.frame_no, matches);
+            } 
                 // MISSING GEOMETRIC VERIFICATINO USING RANSAC
                 // MAYBE DIFFERENT MATCHER HANDLES THAT?
-            }
         }
     }
+    // return matches;
+
 }
+
 
 
 
@@ -98,7 +101,6 @@ int main()
     return 0;
 
 }
-
 
 
 
