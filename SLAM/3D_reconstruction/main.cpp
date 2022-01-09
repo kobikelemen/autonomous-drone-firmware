@@ -1,7 +1,9 @@
-#include "scene_graph.hpp"
 #include <opencv2/opencv.hpp>
 #include <opencv2/sfm.hpp>
+#include "scene_graph.hpp"
 #include <iostream>
+
+
 
 
 // need to link opencv:
@@ -17,8 +19,9 @@ void save_frames(Scene_graph &g)
     cv::Ptr<cv::ORB> detector = cv::ORB::create(2000);
     std::vector<Image> first_two;
 
-    for (int frame_num=0; frame_num <= 30; frame_num++) {
-        if (frame_num % 30 == 0) {
+    g.keyframe_count = 30;
+    for (int frame_num=0; frame_num <= g.keyframe_count; frame_num++) {
+        if (frame_num % g.keyframe_count == 0) {
             cv::Mat f;
             house_tour >> f;
             std::vector<cv::KeyPoint> kp;
@@ -33,14 +36,14 @@ void save_frames(Scene_graph &g)
     }
     g.initialise(first_two[0], first_two[1]);
 
-    for (int frame_num=31; frame_num < house_tour.get(cv::CAP_PROP_FRAME_COUNT); frame_num++) {
-        if (frame_num % 30 == 0) {
+    for (int frame_num=g.keyframe_count+1; frame_num < house_tour.get(cv::CAP_PROP_FRAME_COUNT); frame_num++) {
+        if (frame_num % g.keyframe_count == 0) {
             cv::Mat f;
             house_tour >> f;
             std::vector<cv::KeyPoint> kp;
             cv::Mat desc;
             detector->detectAndCompute(f, cv::noArray(), kp, desc);
-            int t = frame_num/30;
+            int t = frame_num/g.keyframe_count;
             Image img(t, kp, desc, f);
             g.add_frame(img);
             image_correspondances(g, img);
@@ -61,11 +64,12 @@ bool check(cv::DMatch i, cv::DMatch j) {
     return i.distance < j.distance;
 }
 
-std::vector<cv::DMatch> image_correspondances(Scene_graph &g, Image img)
+//std::vector<cv::DMatch> 
+void image_correspondances(Scene_graph &g, Image img)
 {
     std::vector<Image> imgs = g.get_frames();
     cv::BFMatcher matcher(cv::NORM_HAMMING2, true);
-
+    // makes more sense to pass pointer to img to add_connection instead of searching for it again
     for (Image check_img : imgs) {
         if (img.frame_no != check_img.frame_no) {
             std::vector<cv::DMatch> matches;
@@ -101,6 +105,5 @@ int main()
     return 0;
 
 }
-
 
 
