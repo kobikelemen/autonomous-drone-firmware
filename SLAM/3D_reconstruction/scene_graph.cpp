@@ -13,10 +13,28 @@ void Scene_graph::initialise(Image img1, Image img2)
         points1.push_back(cv::Point2f(x, y));
         x = img2.keypoints[it->trainIdx].pt.x;
         y = img2.keypoints[it->trainIdx].pt.y;
-        img2.keypoints.push_back(cv::Point2f(x, y));
+        points2.push_back(cv::Point2f(x, y));
     }
 
-    cv::Mat fundamental = cv::findFundamentalMat(points1, points2, method=cv::RANSAC, 0.9, 1);
+    cv::Mat fundamental = cv::findFundamentalMat(points1, points2, cv::RANSAC, 0.9, 1);
+    cv::Mat projection1, projection2; // camera matrices
+    cv::sfm::projectionsFromFundamental(fundamental, projection1, projection2); // takes first frame as origin
+    
+    std::vector<cv::Vec3d> points3D;
+    std::vector<cv::Mat> projections;
+    std::vector<std::vector<cv::Point2f>> points2D;
+    points2D.push_back(points1);
+    points2D.push_back(points2);
+    projections.push_back(projection1);
+    projections.push_back(projection2);
+    cv::sfm::triangulatePoints(points2D, projections, points3D);
+
+    
+    cv::viz::Viz3d window;
+    window.showWidget("coordinate", cv::viz::WCoordinateSystem());
+    window.setBackgroundColor(cv::viz::Color::black());
+    window.showWidget("points", cv::viz::WCloud(points3D, cv::viz::Color::green()));
+    window.spin();
 
 }
 
