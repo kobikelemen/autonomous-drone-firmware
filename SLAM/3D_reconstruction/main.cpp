@@ -2,24 +2,28 @@
 #include <opencv2/sfm.hpp>
 #include "scene_graph.hpp"
 #include <iostream>
+#include <string>
 
 
-
+#include <chrono>
+#include <thread>
 
 // need to link opencv:
 // THIS ONE: g++ -std=c++11 $(pkg-config --cflags --libs opencv) main.cpp -o main
-// then run executable with ./main
-// (pkg-config --cflags --libs opencv has links)
 
+// I THINK THIS WORKS:: g++ -std=c++11 $(pkg-config --cflags --libs opencv4) main.cpp -o main
+// (NOT PREVIOUS)
+
+
+void image_correspondances(Scene_graph &g, Image img);
 
 void save_frames(Scene_graph &g)
 {
-    cv::VideoCapture house_tour("/Users/kobikelemen/Documents/programming/c++/open_test/house_tour.mp4");
+    cv::VideoCapture house_tour("/Users/kobikelemen/Documents/programming/c++/open_test/trimmed_vid.mp4");
     cv::namedWindow("img", cv::WINDOW_AUTOSIZE);
-    cv::Ptr<cv::ORB> detector = cv::ORB::create(2000);
+    cv::Ptr<cv::ORB> detector = cv::ORB::create(1000);
     std::vector<Image> first_two;
-
-    g.keyframe_count = 30;
+    g.keyframe_count = 8;
     for (int frame_num=0; frame_num <= g.keyframe_count; frame_num++) {
         if (frame_num % g.keyframe_count == 0) {
             cv::Mat f;
@@ -34,7 +38,13 @@ void save_frames(Scene_graph &g)
             image_correspondances(g, img);
         }
     }
-    g.initialise(first_two[0], first_two[1]);
+    // g.initialise(first_two[0], first_two[1]);
+    // std::cout << "YOOOOOO";
+    // using namespace std::this_thread; // sleep_for, sleep_until
+    // using namespace std::chrono; // nanoseconds, system_clock, seconds
+
+    // sleep_for(nanoseconds(1000000000));
+
 
     for (int frame_num=g.keyframe_count+1; frame_num < house_tour.get(cv::CAP_PROP_FRAME_COUNT); frame_num++) {
         if (frame_num % g.keyframe_count == 0) {
@@ -51,7 +61,8 @@ void save_frames(Scene_graph &g)
             cv::Mat imgkp;
             cv::drawKeypoints(f, kp, imgkp);
             cv::imshow("img", imgkp);
-
+            // cv::imwrite("/Users/kobikelemen/Documents/programming/c++/open_test/frames/frame" + std::to_string(frame_num)+".jpg", imgkp);
+            cv::imwrite("/Users/kobikelemen/Documents/programming/c++/open_test/frames/frame" + std::to_string(frame_num)+".jpg", f);
             if (cv::waitKey(30) == 27) { // break using ESC key
                 break;
             }
@@ -105,5 +116,7 @@ int main()
     return 0;
 
 }
+
+
 
 
